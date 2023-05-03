@@ -8,6 +8,7 @@ interface MiddlewareOptions {
 	instances: {
 		model: Prisma.ModelName;
 		actions: Prisma.PrismaAction[] | string[];
+		args?: SetCommandOptions;
 	}[];
 	args?: SetCommandOptions;
 }
@@ -39,7 +40,7 @@ function upstashMiddleware(options: MiddlewareOptions): Prisma.Middleware {
 				if (cache) return JSON.parse(JSON.stringify(cache), castDates);
 
 				const result = await next(params);
-				redis.set(key, result, args);
+				redis.set(key, result, instance.args ?? args);
 
 				return result;
 			}
