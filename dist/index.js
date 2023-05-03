@@ -4,17 +4,17 @@ function castDates(_, value) {
     return isDate ? new Date(value) : value;
 }
 function upstashMiddleware(options) {
-    const { redis, args, instances } = options;
+    const { upstash, args, instances } = options;
     return async (params, next) => {
         const key = `${params.model}:${params.action}:${JSON.stringify(params.args)}`;
         for (const instance of instances) {
             if (params.model === instance.model &&
                 instance.actions.includes(params.action)) {
-                const cache = await redis.get(key);
+                const cache = await upstash.get(key);
                 if (cache)
                     return JSON.parse(JSON.stringify(cache), castDates);
                 const result = await next(params);
-                redis.set(key, result, args);
+                upstash.set(key, result, instance.args ?? args);
                 return result;
             }
         }

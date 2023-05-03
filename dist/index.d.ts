@@ -1,11 +1,12 @@
 import type { Redis } from "@upstash/redis";
 import type { SetCommandOptions } from "@upstash/redis/types/pkg/commands/set";
 import type { Prisma } from "@prisma/client";
-interface MiddlewareOptions {
-    redis: Redis;
+export interface MiddlewareOptions {
+    upstash: Redis;
     instances: {
         model: Prisma.ModelName;
         actions: Prisma.PrismaAction[] | string[];
+        args?: SetCommandOptions;
     }[];
     args?: SetCommandOptions;
 }
