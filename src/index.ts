@@ -1,6 +1,5 @@
 import type { Redis } from "@upstash/redis";
 import type { SetCommandOptions } from "@upstash/redis/types/pkg/commands/set";
-// @ts-expect-error `prisma generate`
 import type { Prisma } from "@prisma/client";
 
 export interface MiddlewareOptions {
@@ -26,19 +25,21 @@ function castDates<T extends JSONType>(_: string, value: T): T | Date {
 function upstashMiddleware(options: MiddlewareOptions): Prisma.Middleware {
 	const { upstash, args, instances } = options;
 
-	// @ts-expect-error Prisma Middleware
 	return async (params, next) => {
-		const key = `${params.model}:${params.action}:${JSON.stringify(
-			params.args,
-		)}`;
-
 		for (const instance of instances) {
 			if (
 				params.model === instance.model &&
 				instance.actions.includes(params.action)
 			) {
-				const cache = await upstash.get(key);
-				if (cache) return JSON.parse(JSON.stringify(cache), castDates);
+				const key = `${params.model}:${params.action}:${JSON.stringify(
+					params.args,
+				)}`;
+
+				const cache = await upstash.get<string | object>(key);
+				if (cache !== null) {
+					if (typeof cache === "string") return JSON.parse(cache, castDates);
+					else return JSON.parse(JSON.stringify(cache), castDates);
+				}
 
 				const result = await next(params);
 				upstash.set(key, result, instance.args ?? args);
