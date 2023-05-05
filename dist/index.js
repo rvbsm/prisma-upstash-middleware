@@ -6,13 +6,17 @@ function castDates(_, value) {
 function upstashMiddleware(options) {
     const { upstash, args, instances } = options;
     return async (params, next) => {
-        const key = `${params.model}:${params.action}:${JSON.stringify(params.args)}`;
         for (const instance of instances) {
             if (params.model === instance.model &&
                 instance.actions.includes(params.action)) {
+                const key = `${params.model}:${params.action}:${JSON.stringify(params.args)}`;
                 const cache = await upstash.get(key);
-                if (cache)
-                    return JSON.parse(JSON.stringify(cache), castDates);
+                if (cache !== null) {
+                    if (typeof cache === "string")
+                        return JSON.parse(cache, castDates);
+                    else
+                        return JSON.parse(JSON.stringify(cache), castDates);
+                }
                 const result = await next(params);
                 upstash.set(key, result, instance.args ?? args);
                 return result;
