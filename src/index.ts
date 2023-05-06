@@ -26,29 +26,27 @@ function upstashMiddleware(options: MiddlewareOptions): Prisma.Middleware {
 	const { upstash, args, instances } = options;
 
 	return async (params, next) => {
-		for (const instance of instances) {
-			if (
-				params.model === instance.model &&
-				instance.actions.includes(params.action)
-			) {
-				const key = `${params.model}:${params.action}:${JSON.stringify(
-					params.args,
-				)}`;
+		const instance = instances.find(
+			(instance) =>
+				instance.model === params.model &&
+				instance.actions.includes(params.action),
+		);
+		if (!instance) return next(params);
 
-				const cache = await upstash.get<string | object>(key);
-				if (cache !== null) {
-					if (typeof cache === "string") return JSON.parse(cache, castDates);
-					else return JSON.parse(JSON.stringify(cache), castDates);
-				}
+		const key = `${params.model}:${params.action}:${JSON.stringify(
+			params.args,
+		)}`;
 
-				const result = await next(params);
-				upstash.set(key, result, instance.args ?? args);
-
-				return result;
-			}
+		const cache = await upstash.get<string | object>(key);
+		if (cache !== null) {
+			if (typeof cache === "string") return JSON.parse(cache, castDates);
+			else return JSON.parse(JSON.stringify(cache), castDates);
 		}
 
-		return next(params);
+		const result = await next(params);
+		upstash.set(key, result, instance.args ?? args);
+
+		return result;
 	};
 }
 
