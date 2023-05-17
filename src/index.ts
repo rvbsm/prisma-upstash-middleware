@@ -14,8 +14,7 @@ export interface MiddlewareOptions {
 
 type JSONType = string | number | object | [] | boolean | null;
 
-const datePattern =
-	/\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z)/;
+const datePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
 
 function castDates<T extends JSONType>(_: string, value: T): T | Date {
 	const isDate = typeof value === "string" && datePattern.test(value);
