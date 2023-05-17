@@ -27,3 +27,35 @@ prisma.$use(
  }),
 );
 ```
+
+## Contributing
+
+Pull requests are welcome.
+For major changes, please open an issue first to discuss what you would like to change.
+
+### Prerequisite before building
+
+There will be errors like `error TS2305: Module '"@prisma/client"' has no exported member 'Prisma'.` if this not done:
+
+1. Run `pnpm install`
+2. Run `pnpm exec prisma init`
+3. Add Prisma model to [prisma/schema.prisma][prisma-schema]
+4. Run `pnpm exec prisma generate`
+5. Run `pnpm build`
+
+Not necessarily pnpm, you are free to use any other Package Manager
+
+#### Prisma model example
+
+```prisma
+model User {
+  id String @id @default(cuid())
+}
+```
+
+## License
+
+This project is licensed under the [MIT License][license].
+
+[license]: ./LICENSE
+[prisma-schema]: ./prisma/schema.prisma
