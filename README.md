@@ -21,10 +21,8 @@ const redis = Redis.fromEnv();
 prisma.$use(
  upstashMiddleware({
   redis: redis,
-  instances: [
-   { model: "User", actions: ["findUnique"] },
-   { model: "Post", actions: ["findUnique", "findMany"] },
-  ],
+  models: ["User", "Post"],
+  actions: ["findUnique", "findMany"],
   args: { ex: 300 },
  }),
 );
