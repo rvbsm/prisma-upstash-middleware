@@ -4,11 +4,8 @@ import type { Prisma } from "@prisma/client";
 
 export interface MiddlewareOptions {
 	upstash: Redis;
-	instances: {
-		model: Prisma.ModelName;
-		actions: Prisma.PrismaAction[] | string[];
-		args?: SetCommandOptions;
-	}[];
+	models: Prisma.ModelName[];
+	actions: Prisma.PrismaAction[];
 	args?: SetCommandOptions;
 }
 
@@ -23,30 +20,29 @@ function dateReviver(_: string, value: JSONType): JSONType | Date {
 }
 
 function upstashMiddleware(options: MiddlewareOptions): Prisma.Middleware {
-	const { upstash, args, instances } = options;
+	const { upstash, models, actions, args } = options;
 
 	return async (params, next) => {
-		const instance = instances.find(
-			(instance) =>
-				instance.model === params.model &&
-				instance.actions.includes(params.action),
-		);
-		if (!instance) return next(params);
+		if (
+			params.model &&
+			models.includes(params.model) &&
+			actions.includes(params.action)
+		) {
+			const key = `${params.model}:${params.action}:${params.args[0]}`;
 
-		const key = `${params.model}:${params.action}:${JSON.stringify(
-			params.args,
-		)}`;
-
-		const cache = await upstash.get<string | object>(key);
-		if (cache !== null) {
+			const cache = await upstash.get<string | object>(key);
+			if (cache !== null) {
 				if (typeof cache === "string") return JSON.parse(cache, dateReviver);
 				else return JSON.parse(JSON.stringify(cache), dateReviver);
+			}
+
+			const result = await next(params);
+			upstash.set(key, result, args);
+
+			return result;
 		}
 
-		const result = await next(params);
-		upstash.set(key, result, instance.args ?? args);
-
-		return result;
+		return next(params);
 	};
 }
 
