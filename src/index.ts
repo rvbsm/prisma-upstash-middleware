@@ -6,7 +6,7 @@ export interface MiddlewareOptions {
 	upstash: Redis;
 	models: Prisma.ModelName[];
 	actions: Prisma.PrismaAction[];
-	args?: SetCommandOptions;
+	opts?: SetCommandOptions;
 }
 
 type JSONType = string | number | object | [] | boolean | null;
@@ -20,7 +20,7 @@ function dateReviver(_: string, value: JSONType): JSONType | Date {
 }
 
 function upstashMiddleware(options: MiddlewareOptions): Prisma.Middleware {
-	const { upstash, models, actions, args } = options;
+	const { upstash, models, actions, opts } = options;
 
 	return async (params, next) => {
 		if (
@@ -37,7 +37,7 @@ function upstashMiddleware(options: MiddlewareOptions): Prisma.Middleware {
 			}
 
 			const result = await next(params);
-			upstash.set(key, result, args);
+			upstash.set(key, result, opts);
 
 			return result;
 		}
