@@ -11,6 +11,8 @@ export interface MiddlewareOptions {
 
 type JSONType = string | number | object | [] | boolean | null;
 
+const defaultOpts: SetCommandOptions = { ex: 300 };
+
 const datePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/;
 
 function dateReviver(_: string, value: JSONType): JSONType | Date {
@@ -37,7 +39,7 @@ function upstashMiddleware(options: MiddlewareOptions): Prisma.Middleware {
 			}
 
 			const result = await next(params);
-			upstash.set(key, result, opts);
+			upstash.set(key, result, opts ?? defaultOpts);
 
 			return result;
 		}
